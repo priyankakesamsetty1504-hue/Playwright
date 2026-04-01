@@ -1,0 +1,223 @@
+name: Playwright Tests
+
+# ──────────────────────────────────────────────
+# TRIGGERS — runs on push, PR, and manual dispatch
+# ──────────────────────────────────────────────
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      test_grep:
+        description: 'Tag filter (e.g. @api, @smoke, @ui)'
+        required: false
+        default: ''
+      browser:
+        description: 'Browser to test on'
+        required: false
+        default: 'chromium'
+        type: choice
+        options:
+          - chromium
+          - firefox
+          - webkit
+          - all
+
+# ──────────────────────────────────────────────
+# ENVIRONMENT VARIABLES from GitHub Secrets
+# ──────────────────────────────────────────────
+env:
+  CI: true
+  GITHUB_Accesstoken: ${{ secrets.GITHUB_ACCESSTOKEN }}
+  GITHUB_InvalidAccesstoken: ${{ secrets.GITHUB_INVALIDACCESSTOKEN }}
+  GITHUB_baseurl: https://api.github.com
+  GITHUB_USERNAME: ${{ secrets.GITHUB_USERNAME }}
+  GITHUB_PASSWORD: ${{ secrets.GITHUB_PASSWORD }}
+  OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+  OPENWEATHER_BASE_URL: https://api.openweathermap.org/data/2.5
+  API_KEY: ${{ secrets.API_KEY }}
+  API_KEY_HEADER: x-api-key
+  API_KEY_QUERY: apikey
+  ECHO_BASE_URL: https://postman-echo.com
+
+jobs:
+  # ──────────────────────────────────────────────
+  # JOB 1 — LINT & VALIDATE (quick check)
+  # ──────────────────────────────────────────────
+  validate:
+    name: 🔍 Validate Setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Verify Playwright installation
+        run: npx playwright --version
+
+  # ──────────────────────────────────────────────
+  # JOB 2 — API TESTS (no browser needed)
+  # ──────────────────────────────────────────────
+  api-tests:
+    name: 🔌 API Tests
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright (Chromium only for API)
+        run: npx playwright install chromium --with-deps
+
+      - name: Run API Tests
+        run: npx playwright test --grep @api --project=chromium --retries=1
+        continue-on-error: true
+
+      - name: Upload API Test Report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: api-test-report
+          path: playwright-report/
+          retention-days: 30
+
+  # ──────────────────────────────────────────────
+  # JOB 3 — UI TESTS (multi-browser matrix)
+  # ──────────────────────────────────────────────
+  ui-tests:
+    name: 🖥️ UI Tests (${{ matrix.browser }})
+    needs: validate
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright Browser
+        run: npx playwright install ${{ matrix.browser }} --with-deps
+
+      - name: Run UI Tests
+        run: npx playwright test --grep @ui --project=${{ matrix.browser }} --retries=2
+        continue-on-error: true
+
+      - name: Upload UI Test Report (${{ matrix.browser }})
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: ui-test-report-${{ matrix.browser }}
+          path: playwright-report/
+          retention-days: 30
+
+  # ──────────────────────────────────────────────
+  # JOB 4 — SMOKE TESTS (critical path, must pass)
+  # ──────────────────────────────────────────────
+  smoke-tests:
+    name: 🚀 Smoke Tests
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright Browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Run Smoke Tests
+        run: npx playwright test --grep @smoke --project=chromium
+
+      - name: Upload Smoke Report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: smoke-test-report
+          path: playwright-report/
+          retention-days: 30
+
+  # ──────────────────────────────────────────────
+  # JOB 5 — FULL REGRESSION (manual trigger only)
+  # ──────────────────────────────────────────────
+  full-regression:
+    name: 🧪 Full Regression
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Install All Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Determine browser project
+        id: browser
+        run: |
+          if [ "${{ github.event.inputs.browser }}" = "all" ]; then
+            echo "projects=--project=chromium --project=firefox --project=webkit" >> $GITHUB_OUTPUT
+          else
+            echo "projects=--project=${{ github.event.inputs.browser }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Determine grep filter
+        id: grep
+        run: |
+          if [ -n "${{ github.event.inputs.test_grep }}" ]; then
+            echo "filter=--grep ${{ github.event.inputs.test_grep }}" >> $GITHUB_OUTPUT
+          else
+            echo "filter=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run Full Regression
+        run: npx playwright test ${{ steps.browser.outputs.projects }} ${{ steps.grep.outputs.filter }} --retries=2
+        continue-on-error: true
+
+      - name: Upload Full Regression Report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: full-regression-report
+          path: playwright-report/
+          retention-days: 30
+
+  # ──────────────────────────────────────────────
+  # JOB 6 — PUBLISH REPORT SUMMARY
+  # ──────────────────────────────────────────────
+  report-summary:
+    name: 📊 Report Summary
+    needs: [api-tests, ui-tests, smoke-tests]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Summary
+        run: |
+          echo "## 🧪 Test Results Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔌 API Tests | ${{ needs.api-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🖥️ UI Tests | ${{ needs.ui-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🚀 Smoke Tests | ${{ needs.smoke-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📥 Download test reports from the Artifacts section below." >> $GITHUB_STEP_SUMMARY

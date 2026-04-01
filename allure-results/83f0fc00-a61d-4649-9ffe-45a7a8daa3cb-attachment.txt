@@ -1,0 +1,21 @@
+Status Code: 200
+[
+  {
+    userId: 2,
+    id: 12,
+    title: 'in quibusdam tempore odit est dolorem',
+    body: 'itaque id aut magnam\n' +
+      'praesentium quia et ea odit et ea voluptas et\n' +
+      'sapiente quia nihil amet occaecati quia id voluptatem\n' +
+      'incidunt ea est distinctio odio'
+  },
+  {
+    userId: 2,
+    id: 15,
+    title: 'eveniet quod temporibus',
+    body: 'reprehenderit quos placeat\n' +
+      'velit minima officia dolores impedit repudiandae molestiae nam\n' +
+      'voluptas recusandae quis delectus\n' +
+      'officiis harum fugiat vitae'
+  }
+]

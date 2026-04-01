@@ -1,0 +1,32 @@
+{
+  "name": "playwrighttraining_zensar",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:api": "npx playwright test --grep @api",
+    "test:smoke": "npx playwright test --grep @smoke",
+    "open:report": "start extent-report/index.html",
+    "test:failed": "playwright test --last-failed",
+     "test:retry": "playwright test --retries=2",
+    "test:correlation":"npx playwright test --grep @correlation",
+    "test:heroku":"npx playwright test --headed --grep @heroku",
+    "test:demotau":"npx playwright test --headed --grep @demotau"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@types/node": "^25.5.0",
+    "allure-playwright": "^3.6.0",
+    "playwright-html-reporter": "^0.1.11"
+  },
+  "dependencies": {
+    "csv-parse": "^6.2.1",
+    "dotenv": "^17.3.1",
+    "xlsx": "^0.18.5"
+  }
+}

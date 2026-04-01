@@ -1,0 +1,8 @@
+Status Code: 201
+Request Payload: {
+  id: 110,
+  title: "Reshma's Data",
+  body: 'created by Reshma',
+  userId: 1100
+}
+<Buffer 7b 0a 20 20 22 69 64 22 3a 20 31 30 31 0a 7d>
