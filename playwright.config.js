@@ -18,6 +18,7 @@ dotenv.config();
  */
 module.exports = defineConfig({
   testDir: './',
+  testIgnore: ['**/codegen.spec.*', '**/seed.spec.*'],
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -42,8 +43,8 @@ module.exports = defineConfig({
   use: {
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
-    slowMo: 10000,
-    video: 'on'
+    slowMo: process.env.CI ? 0 : 10000,
+    video: process.env.CI ? 'off' : 'on'
   },
 
   /* Configure projects for major browsers */
