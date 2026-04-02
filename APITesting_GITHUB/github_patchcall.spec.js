@@ -16,6 +16,8 @@ test(`Verify successful update of repository name and description`, async ({requ
  const responseBody = await res.json();
     console.log(responseBody);
     test('verify user is sucessfully logged in with valid credentials',async({page})=>{
+    test.skip(!!process.env.CI, 'Skipping GitHub login on CI');
+
     await page.goto('https://github.com/');
     //await expect(page.getByRole('button',{name:'Sign in'})).toBeVisible();
     //await page.getByRole('button',{name:'Sign in'}).click();

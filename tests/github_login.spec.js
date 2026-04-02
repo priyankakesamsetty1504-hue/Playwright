@@ -1,5 +1,9 @@
 import {test, expect} from '@playwright/test';
 import { github_login } from '../Utils/github';
+
+// Skip GitHub UI login tests on CI (requires device verification)
+test.skip(!!process.env.CI, 'Skipping GitHub login on CI - requires device verification');
+
 // test('verify user is sucessfully logged in with valid credentials',async({page})=>{
 //     await page.goto('https://github.com/');
 //     //await expect(page.getByRole('button',{name:'Sign in'})).toBeVisible();
