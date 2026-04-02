@@ -1,5 +1,5 @@
 import {test,expect} from '@playwright/test';
-import { apiKeyQuery } from '../Utils/apikeyquery';
+import { apiKeyQuery } from '../Utils/apiKeyQuery';
 
 test('[API Key - Query] Postman Echo reflects query key', async ({ request }) => {
     const BASE_URL = process.env.ECHO_BASE_URL;
