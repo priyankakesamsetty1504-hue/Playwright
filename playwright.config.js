@@ -27,17 +27,18 @@ module.exports = defineConfig({
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
-  reporter:  [
-    ['html', { open: 'always' }],
-    // ['allure-playwright',{ open: 'always' }]
-  //     ['playwright-html-reporter', {
-  //   outputFolder: 'extent-report',
-  //   filename: 'index.html',
-  //   title: 'Playwright Test Report',
-  //   includeFailureMsg: true,
-  //   includeSuiteOnFailure: true,
-  //   open: 'always'
-  // }]
+  reporter: [
+    ['html', { open: 'never' }],
+    ['allure-playwright', { outputFolder: 'allure-results' }],
+    ['playwright-html-reporter', {
+      outputFolder: 'extent-report',
+      filename: 'index.html',
+      title: 'Playwright Test Report',
+      includeFailureMsg: true,
+      includeSuiteOnFailure: true,
+      open: 'never'
+    }],
+    ['list']
   ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
