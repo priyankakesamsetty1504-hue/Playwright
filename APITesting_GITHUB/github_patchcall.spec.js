@@ -20,8 +20,8 @@ test(`Verify successful update of repository name and description`, async ({requ
     //await expect(page.getByRole('button',{name:'Sign in'})).toBeVisible();
     //await page.getByRole('button',{name:'Sign in'}).click();
     await page.locator(`(//a[contains(text(),'Sign in')])[2]`).click();
-    await page.getByLabel('Username or email address').fill(process.env.GITHUB_USERNAME);
-    await page.getByLabel('Password').fill(process.env.GITHUB_PASSWORD);
+    await page.getByLabel('Username or email address').fill(process.env.GHUB_USERNAME);
+    await page.getByLabel('Password').fill(process.env.GHUB_PASSWORD);
     await page.getByRole('button',{name:'Sign in'}).click();
     await expect(page.locator(`//span[contains(text(),'Dashboard')]`)).toBeVisible();
     console.log('User is successfully logged in');

@@ -62,7 +62,7 @@ console.log(body.message);
 
 test('Verify that a GET request with an invalid or expired authentication token returns a 401 Unauthorized status code',async({request})=>{
 const {baseURL,extraHTTPHeaders}=github_login({
-    accesskey :process.env.GITHUB_InvalidAccesstoken,
+    accesskey :process.env.GHUB_InvalidAccesstoken,
     extra:{Accept:'application/vnd.github+json'}
 });
 const res= await request.get(`${baseURL}/repos/octocat/Hello-World`,{extraHTTPHeaders})
